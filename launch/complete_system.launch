@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Complete system launch -->
+  
+  <!-- Set to 'parkour' to use parkour world, or 'empty' for empty world -->
+  <arg name="world" default="empty"/>
+  <arg name="world_name" default="worlds/empty.world" if="$(eval world == 'empty')"/>
+  <arg name="world_name" default="$(find rl_deploy)/worlds/parkour_simple.world" if="$(eval world == 'parkour')"/>
+  
+  <arg name="paused" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="rviz" default="true"/>
+  <arg name="model_dir" default="$(find rl_deploy)"/>
+  
+  <!-- Step 1: Launch Gazebo with robot -->
+  <include file="$(find rl_deploy)/launch/spawn_go2.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="z" value="0.42"/>
+    <arg name="robot_ns" value="go2_gazebo"/>
+  </include>
+  
+  <!-- Step 2: Launch RL deployment system -->
+  <include file="$(find rl_deploy)/launch/rl_deploy.launch">
+    <arg name="model_dir" value="$(arg model_dir)"/>
+    <arg name="rviz" value="$(arg rviz)"/>
+  </include>
+  
+  <!-- Joy node for joystick input -->
+  <node name="joy_node" pkg="joy" type="joy_node">
+    <param name="dev" value="/dev/input/js0"/>
+    <param name="deadzone" value="0.1"/>
+    <param name="autorepeat_rate" value="50"/>
+  </node>
+  
+</launch>

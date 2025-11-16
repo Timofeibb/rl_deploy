@@ -1,0 +1,202 @@
+# Go2 Parkour RL Deployment Configuration
+
+model:
+  device: "cpu"  # or "cuda"
+
+# Robot configuration
+robot:
+  name: "go2"
+  num_dof: 12
+  
+  # Joint names (in order)
+  joint_names:
+    - "FR_hip_joint"
+    - "FR_thigh_joint"
+    - "FR_calf_joint"
+    - "FL_hip_joint"
+    - "FL_thigh_joint"
+    - "FL_calf_joint"
+    - "RR_hip_joint"
+    - "RR_thigh_joint"
+    - "RR_calf_joint"
+    - "RL_hip_joint"
+    - "RL_thigh_joint"
+    - "RL_calf_joint"
+  
+  # Foot link names for contact detection
+  foot_names:
+    - "FR_foot"
+    - "FL_foot"
+    - "RR_foot"
+    - "RL_foot"
+
+# FSM Joint Positions
+joint_positions:
+  # Sit position (joints in radians)
+  sit:
+    FR_hip_joint: 0.0
+    FR_thigh_joint: 1.36
+    FR_calf_joint: -2.65
+    FL_hip_joint: 0.0
+    FL_thigh_joint: 1.36
+    FL_calf_joint: -2.65
+    RR_hip_joint: 0.0
+    RR_thigh_joint: 1.36
+    RR_calf_joint: -2.65
+    RL_hip_joint: 0.0
+    RL_thigh_joint: 1.36
+    RL_calf_joint: -2.65
+  
+  # Stand position
+  stand:
+    FR_hip_joint: 0.0
+    FR_thigh_joint: 0.8
+    FR_calf_joint: -1.5
+    FL_hip_joint: 0.0
+    FL_thigh_joint: 0.8
+    FL_calf_joint: -1.5
+    RR_hip_joint: 0.0
+    RR_thigh_joint: 1.0
+    RR_calf_joint: -1.5
+    RL_hip_joint: 0.0
+    RL_thigh_joint: 1.0
+    RL_calf_joint: -1.5
+  
+  # Default angles for RL mode (neutral position)
+  default:
+    FR_hip_joint: -0.1
+    FR_thigh_joint: 0.4
+    FR_calf_joint: -1.5
+    FL_hip_joint: 0.1
+    FL_thigh_joint: 0.4
+    FL_calf_joint: -1.5
+    RR_hip_joint: -0.1
+    RR_thigh_joint: 1.0
+    RR_calf_joint: -1.5
+    RL_hip_joint: 0.1
+    RL_thigh_joint: 1.0
+    RL_calf_joint: -1.5
+
+# Control parameters
+control:
+  # PD gains for static positions (sit/stand)
+  static_mode:
+    stiffness: 40.0
+    damping: 2.0
+  
+  # PD gains for RL mode
+  rl_mode:
+    stiffness: 40.0
+    damping: 1.0
+  
+  action_scale: 0.25
+  decimation: 0.005
+  control_dt: 0.02  # 50Hz
+  
+# Observation configuration
+observation:
+  n_proprio: 53
+  n_depth_latent: 32
+  n_scan: 0  # No height scanner on real hardware
+  n_priv_explicit: 9
+  n_priv_latent: 29
+  history_len: 10
+  
+  # Observation scales
+  scales:
+    lin_vel: 1.0
+    ang_vel: 0.25
+    dof_pos: 1.0
+    dof_vel: 0.05
+
+# Depth camera configuration
+depth_camera:
+  topic: "/depth_camera/depth/image_rect_raw"
+  width: 106
+  height: 60
+  update_rate: 30.0
+  
+  # Preprocessing (will resize to match training)
+  crop_top: 0
+  crop_bottom: 0
+  crop_left: 0
+  crop_right: 0
+  resize_width: 87
+  resize_height: 58
+  
+  # Depth range (meters)
+  depth_min: 0.0
+  depth_max: 3.0
+  
+  # Vision update interval (control cycles)
+  visual_update_interval: 5  # 10Hz when control is 50Hz
+
+# IMU configuration
+imu:
+  topic: "/trunk_imu"
+
+# Joint state configuration  
+joint_states:
+  topic: "/go2_gazebo/joint_states"
+
+# Joint controller command topic
+joint_controller:
+  topic: "/go2_gazebo/go2_joint_controller/command"
+
+# Contact sensor configuration
+contact:
+  topics:
+    FR: "/FR_foot_contact"
+    FL: "/FL_foot_contact"
+    RR: "/RR_foot_contact"
+    RL: "/RL_foot_contact"
+  force_threshold: 5.0  # Newtons
+
+# Joystick configuration
+joystick:
+  topic: "/joy"
+  
+  # Button mapping (typical for Logitech/Xbox controller)
+  buttons:
+    A: 0
+    B: 1
+    X: 2
+    Y: 3
+    LB: 4
+    RB: 5
+    BACK: 6
+    START: 7
+  
+  # Axis mapping for velocity commands
+  axes:
+    linear_x: 1   # Left stick Up/Down (forward/back) - axes[1]
+    linear_y: 3   # Right stick Left/Right (strafe left/right) - axes[3]
+    angular_z: 0  # Left stick Left/Right (rotation yaw) - axes[0]
+  
+  # Deadband
+  deadband: 0.1
+  
+  # Velocity command ranges
+  cmd_vel:
+    x_max: 1.0
+    x_min: -0.8
+    y_max: 0.8
+    y_min: -0.8
+    yaw_max: 1.6
+    yaw_min: -1.6
+
+# Normalization
+normalization:
+  clip_observations: 100.0
+  clip_actions: 100.0
+
+# Safety
+safety:
+  joint_position_limits_scale: 1.1  # Scale factor for safety limits
+  emergency_stop_button: 6  # BACK button
+
+# FSM timing
+fsm:
+  sit_duration: 2.0   # seconds
+  stand_duration: 2.0 # seconds
+  transition_rate: 50.0  # Hz for smooth interpolation

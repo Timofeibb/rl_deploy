@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="config_file" default="$(find rl_deploy)/config/go2_parkour_config.yaml"/>
+  <arg name="model_dir" default="$(find rl_deploy)"/>
+  
+  <!-- Load global configuration to parameter server -->
+  <rosparam file="$(arg config_file)" command="load"/>
+  
+  <!-- Observation Manager -->
+  <node name="observation_manager" pkg="rl_deploy" type="observation_manager.py"
+        output="screen" respawn="false">
+    <rosparam file="$(arg config_file)" command="load"/>
+  </node>
+  
+  <!-- FSM Controller -->
+  <node name="fsm_controller" pkg="rl_deploy" type="fsm_controller.py"
+        output="screen" respawn="false">
+    <rosparam file="$(arg config_file)" command="load"/>
+  </node>
+  
+  <!-- RL Policy Node -->
+  <node name="rl_policy_node" pkg="rl_deploy" type="rl_policy_node.py"
+        output="screen" respawn="false">
+    <rosparam file="$(arg config_file)" command="load"/>
+    <!-- Override model paths in private namespace -->
+    <param name="~model/base_model" value="$(arg model_dir)/traced/base_jit.pt"/>
+    <param name="~model/vision_model" value="$(arg model_dir)/traced/vision_weight.pt"/>
+  </node>
+  
+  
+  <!-- RViz for visualization (optional) -->
+  <arg name="rviz" default="false"/>
+  <!-- <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz"/> -->
+  
+</launch>

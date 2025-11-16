@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Minimal spawn for debugging -->
+  
+  <arg name="world_name" default="worlds/empty.world"/>
+  <arg name="paused" default="false"/>
+  <arg name="gui" default="false"/>
+  
+  <!-- Start Gazebo -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+  
+  <!-- Load robot description -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro '$(find go2_description)/xacro/robot.xacro'"/>
+  
+  <!-- Spawn robot -->
+  <node name="spawn_go2" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model go2 -param robot_description -z 0.42"
+        output="screen"/>
+  
+  <!-- Robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  
+  <!-- Load controllers to proper namespace -->
+  <rosparam file="$(find rl_deploy)/config/controllers.yaml" command="load" ns="/go2_gazebo"/>
+  
+  <!-- Spawn controllers with timeout -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"
+        respawn="false" output="screen" ns="/go2_gazebo"
+        args="--timeout=60 joint_state_controller go2_joint_controller"/>
+  
+</launch>

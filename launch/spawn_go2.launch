@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="world_name" default="worlds/empty.world"/>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="model_path" default="$(find go2_description)"/>
+  <arg name="robot_ns" default="go2_gazebo"/>
+  
+  <!-- Robot pose -->
+  <arg name="x" default="0"/>
+  <arg name="y" default="0"/>
+  <arg name="z" default="0.5"/>
+  <arg name="roll" default="0"/>
+  <arg name="pitch" default="0"/>
+  <arg name="yaw" default="0"/>
+  
+  <!-- Start Gazebo -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+  
+  <!-- Load robot description -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro '$(arg model_path)/xacro/robot.xacro'"/>
+  
+  <!-- Spawn robot in Gazebo -->
+  <node name="spawn_go2" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model go2 -param robot_description
+              -x $(arg x) -y $(arg y) -z $(arg z)
+              -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"
+        output="screen"/>
+  
+  <!-- Robot state publisher -->
+  <!-- convert joint states to TF transforms for rviz, etc -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+          respawn="false" output="screen" ns="$(arg robot_ns)">
+        <remap from="/joint_states" to="joint_states"/>
+    </node>
+
+    <!-- Load joint controller configurations to proper namespace -->
+    <rosparam file="$(find rl_deploy)/config/controllers.yaml" command="load" ns="/go2_gazebo"/>
+
+    <!-- Spawn controllers using controller_manager -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" ns="$(arg robot_ns)"
+          args="joint_state_controller
+                FR_hip_controller FR_thigh_controller FR_calf_controller
+                FL_hip_controller FL_thigh_controller FL_calf_controller
+                RR_hip_controller RR_thigh_controller RR_calf_controller
+                RL_hip_controller RL_thigh_controller RL_calf_controller"/>
+  
+  <!-- Joint state publisher (for visualization) -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+  
+</launch>
