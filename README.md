@@ -1,6 +1,7 @@
 # RL Deploy - Go2 Parkour Deployment for ROS Noetic Gazebo
 
 Deploy RL parkour policies for Go2 quadruped robot in Gazebo simulation based on Extreme-Parkour-Onboard code (https://github.com/change-every/Extreme-Parkour-Onboard)
+![parkour_simple_gzclient_camera(1)-2025-11-16T14_27_00 150457](https://github.com/user-attachments/assets/88179744-1cf3-4cdd-9e04-fd65f656e9ae)
 
 ## Overview
 
